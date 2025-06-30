@@ -5,13 +5,13 @@
 ## Usage
 
 ```sh
-grinn-flash --da <PATH> --fip <PATH> --dev <DEVICE> [--img <PATH>]
+grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>
 ```
 
 ### Arguments
 
 * `--da <PATH>`: Path to the Download Agent image.
-* `--fip <PATH>`: Path to the Firmware Image Package (FIP) image.
+* `--fip <PATH>` *(optional)*: Path to the Firmware Image Package (FIP) image.
 * `--img <PATH>` *(optional)*: Path to the system image.
 * `--dev <DEVICE>`: Serial device path.
 

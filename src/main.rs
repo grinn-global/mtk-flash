@@ -29,7 +29,7 @@ const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "grinn-flash --da <PATH> --fip <PATH> --dev <DEVICE> [--img <PATH>]",
+    override_usage = "grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
     about = "A tool for flashing Grinn Genio devices.",
     version = "0.1.0"
 )]
@@ -37,8 +37,12 @@ struct Args {
     #[clap(long, value_name = "PATH", help = "Download Agent image")]
     da: PathBuf,
 
-    #[clap(long, value_name = "PATH", help = "Firmware Image Package image")]
-    fip: PathBuf,
+    #[clap(
+        long,
+        value_name = "PATH",
+        help = "Optional Firmware Image Package image"
+    )]
+    fip: Option<PathBuf>,
 
     #[clap(long, value_name = "PATH", help = "Optional system image")]
     img: Option<PathBuf>,
@@ -46,7 +50,7 @@ struct Args {
     #[clap(
         long,
         value_name = "DEVICE",
-        help = "Path to the device (e.g. /dev/ttyUSB0)"
+        help = "Path to the device (e.g. /dev/ttyACM0)"
     )]
     dev: String,
 }
@@ -131,19 +135,23 @@ async fn main() -> Result<()> {
     };
     let mut fb = NusbFastBoot::from_info(&device)?;
 
-    println!("Flashing FIP to mmc0boot0...");
-    flash(&mut fb, "mmc0boot0", &args.fip, interrupt_state.clone()).await?;
+    if let Some(fip) = &args.fip {
+        println!("Flashing FIP to mmc0boot0...");
+        flash(&mut fb, "mmc0boot0", fip, interrupt_state.clone()).await?;
 
-    println!("\n\nErasing mmc0boot1...\n");
-    fb.erase("mmc0boot1").await?;
+        println!("\n\nErasing mmc0boot1...\n");
+        fb.erase("mmc0boot1").await?;
+    } else {
+        println!("No FIP image provided, skipping mmc0boot0 flash.");
+    }
 
     if let Some(img) = &args.img {
-        println!("Erasing mmc0...\n");
+        println!("\nErasing mmc0...\n");
         fb.erase("mmc0").await?;
         println!("Flashing IMG to mmc0...");
         flash(&mut fb, "mmc0", img, interrupt_state.clone()).await?;
     } else {
-        println!("No system image provided, skipping mmc0 erase and flash.");
+        println!("No system image provided, skipping mmc0 flash.");
     }
 
     println!("\nAll operations completed successfully.");
