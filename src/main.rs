@@ -19,6 +19,11 @@ use tokio::{
 };
 use tokio_serial::SerialPortBuilderExt;
 
+// === Constants ===
+const BAUD_RATE: u32 = 115200;
+const HANDSHAKE_ADDRESS: u32 = 0x201000;
+const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
+
 #[derive(Parser)]
 #[clap(
     override_usage = "grinn-flash --da <PATH> --fip <PATH> --dev <DEVICE> [--img <PATH>]",
@@ -56,59 +61,57 @@ async fn main() -> Result<()> {
             "The following required arguments were not provided:",
             "Missing required arguments:",
         );
-        eprintln!("{}", msg);
+        eprintln!("{msg}");
         std::process::exit(1);
     });
 
-    println!("Waiting for target device...");
+    println!("Waiting for target device...\n");
     while !Path::new(&args.dev).exists() {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
 
     {
-        let baud_rate = 115200;
-        let address = 0x201000;
+        let mut serial = tokio_serial::new(&args.dev, BAUD_RATE).open_native_async()?;
 
-        let mut serial = tokio_serial::new(&args.dev, baud_rate).open_native_async()?;
-
-        let brom = serial.execute(Brom::handshake(address)).await?;
+        let brom = serial.execute(Brom::handshake(HANDSHAKE_ADDRESS)).await?;
         let hwcode = serial.execute(brom.hwcode()).await?;
         println!(
-            "Handshake successful: (SoC 0x{:04x}, version {})",
+            "Handshake successful: SoC 0x{:04x}, version {}",
             hwcode.code, hwcode.version
         );
 
         let data = tokio::fs::read(&args.da).await?;
-        println!("Uploading DA to {:#x}...", 0x201000);
+        println!("Uploading DA to {:#x}...", HANDSHAKE_ADDRESS);
         serial.execute(brom.send_da(&data)).await?;
-        println!("Executing DA...");
+        println!("Executing DA...\n");
         serial.execute(brom.jump_da64()).await?;
     }
 
-    println!("\nWaiting for fastboot device...");
+    println!("Waiting for fastboot device...\n");
     let device = loop {
-        if let Some(d) = devices()?.next() {
+        if let Some(d) = devices()?.find(|d| d.serial_number().map(|s| s == TARGET_FASTBOOT_ID).unwrap_or(false)) {
             break d;
         }
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     };
     let mut fb = NusbFastBoot::from_info(&device)?;
 
-    println!("\nFlashing FIP to mmc0boot0...");
+    println!("Flashing FIP to mmc0boot0...");
     flash(&mut fb, "mmc0boot0", &args.fip).await?;
 
-    println!("Erasing mmc0boot1...");
+    println!("\n\nErasing mmc0boot1...\n");
     fb.erase("mmc0boot1").await?;
 
     if let Some(img) = &args.img {
-        println!("\nFlashing IMG to mmc0...");
+        println!("Erasing mmc0...\n");
         fb.erase("mmc0").await?;
+        println!("Flashing IMG to mmc0...");
         flash(&mut fb, "mmc0", img).await?;
     } else {
         println!("No system image provided, skipping mmc0 erase and flash.");
     }
 
-    println!("All operations completed successfully.");
+    println!("\nAll operations completed successfully.");
     Ok(())
 }
 
@@ -131,7 +134,6 @@ async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u3
 
     pb.finish_with_message("Upload complete");
     sender.finish().await?;
-    println!("\nFlashing data...");
     fb.flash(target).await?;
     Ok(())
 }
@@ -170,8 +172,7 @@ async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
     };
 
     println!("Uploading in {} parts", splits.len());
-    for (i, split) in splits.iter().enumerate() {
-        println!("Uploading part {}", i);
+    for split in splits.iter() {
         let mut sender = fb.download(split.sparse_size() as u32).await?;
         sender.extend_from_slice(&split.header.to_bytes()).await?;
 
