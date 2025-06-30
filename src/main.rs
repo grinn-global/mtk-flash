@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use android_sparse_image::{
     CHUNK_HEADER_BYTES_LEN, ChunkHeader, FileHeader, FileHeaderBytes, ParseError,
@@ -16,10 +19,10 @@ use nix::unistd::Uid;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt, SeekFrom},
+    sync::Mutex,
 };
 use tokio_serial::SerialPortBuilderExt;
 
-// === Constants ===
 const BAUD_RATE: u32 = 115200;
 const HANDSHAKE_ADDRESS: u32 = 0x201000;
 const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
@@ -48,6 +51,11 @@ struct Args {
     dev: String,
 }
 
+struct InterruptState {
+    interrupted: bool,
+    confirmed_abort: bool,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     if !Uid::effective().is_root() {
@@ -63,6 +71,29 @@ async fn main() -> Result<()> {
         );
         eprintln!("{msg}");
         std::process::exit(1);
+    });
+
+    let interrupt_state = Arc::new(Mutex::new(InterruptState {
+        interrupted: false,
+        confirmed_abort: false,
+    }));
+
+    let interrupt_state_clone = interrupt_state.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("Failed to listen for Ctrl+C");
+            let mut state = interrupt_state_clone.lock().await;
+            if !state.interrupted {
+                state.interrupted = true;
+                eprintln!("\nInterrupt received. Press Ctrl+C again to abort flashing.");
+            } else {
+                state.confirmed_abort = true;
+                eprintln!("Aborting.");
+                std::process::exit(1);
+            }
+        }
     });
 
     println!("Waiting for target device...\n");
@@ -89,7 +120,11 @@ async fn main() -> Result<()> {
 
     println!("Waiting for fastboot device...\n");
     let device = loop {
-        if let Some(d) = devices()?.find(|d| d.serial_number().map(|s| s == TARGET_FASTBOOT_ID).unwrap_or(false)) {
+        if let Some(d) = devices()?.find(|d| {
+            d.serial_number()
+                .map(|s| s == TARGET_FASTBOOT_ID)
+                .unwrap_or(false)
+        }) {
             break d;
         }
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
@@ -97,7 +132,7 @@ async fn main() -> Result<()> {
     let mut fb = NusbFastBoot::from_info(&device)?;
 
     println!("Flashing FIP to mmc0boot0...");
-    flash(&mut fb, "mmc0boot0", &args.fip).await?;
+    flash(&mut fb, "mmc0boot0", &args.fip, interrupt_state.clone()).await?;
 
     println!("\n\nErasing mmc0boot1...\n");
     fb.erase("mmc0boot1").await?;
@@ -106,7 +141,7 @@ async fn main() -> Result<()> {
         println!("Erasing mmc0...\n");
         fb.erase("mmc0").await?;
         println!("Flashing IMG to mmc0...");
-        flash(&mut fb, "mmc0", img).await?;
+        flash(&mut fb, "mmc0", img, interrupt_state.clone()).await?;
     } else {
         println!("No system image provided, skipping mmc0 erase and flash.");
     }
@@ -115,7 +150,13 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u32) -> Result<()> {
+async fn flash_raw(
+    fb: &mut NusbFastBoot,
+    target: &str,
+    mut file: File,
+    size: u32,
+    interrupt_state: Arc<Mutex<InterruptState>>,
+) -> Result<()> {
     let mut sender = fb.download(size).await?;
     let mut left = size as usize;
     let pb = ProgressBar::new(left as u64).with_style(
@@ -126,6 +167,13 @@ async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u3
     );
 
     while left > 0 {
+        {
+            let state = interrupt_state.lock().await;
+            if state.confirmed_abort {
+                bail!("Flashing aborted by user.");
+            }
+        }
+
         let buf = sender.get_mut_data(left).await?;
         file.read_exact(buf).await?;
         left -= buf.len();
@@ -138,7 +186,12 @@ async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u3
     Ok(())
 }
 
-async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
+async fn flash(
+    fb: &mut NusbFastBoot,
+    target: &str,
+    path: &Path,
+    interrupt_state: Arc<Mutex<InterruptState>>,
+) -> Result<()> {
     let max_dl = fb.get_var("max-download-size").await?;
     let max_download = parse_u32_hex(&max_dl).context("Failed to parse max download size")?;
 
@@ -164,7 +217,7 @@ async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
             let size = file.seek(SeekFrom::End(0)).await?;
             if size < max_download as u64 {
                 file.seek(SeekFrom::Start(0)).await?;
-                return flash_raw(fb, target, file, size as u32).await;
+                return flash_raw(fb, target, file, size as u32, interrupt_state).await;
             }
             split_raw(size as usize, max_download)?
         }
@@ -173,6 +226,13 @@ async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
 
     println!("Uploading in {} parts", splits.len());
     for split in splits.iter() {
+        {
+            let state = interrupt_state.lock().await;
+            if state.confirmed_abort {
+                bail!("Flashing aborted by user.");
+            }
+        }
+
         let mut sender = fb.download(split.sparse_size() as u32).await?;
         sender.extend_from_slice(&split.header.to_bytes()).await?;
 
@@ -191,6 +251,13 @@ async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
         );
 
         for chunk in &split.chunks {
+            {
+                let state = interrupt_state.lock().await;
+                if state.confirmed_abort {
+                    bail!("Flashing aborted by user.");
+                }
+            }
+
             let hdr = chunk.header.to_bytes();
             sender.extend_from_slice(&hdr).await?;
             pb.inc(hdr.len() as u64);
@@ -198,6 +265,13 @@ async fn flash(fb: &mut NusbFastBoot, target: &str, path: &Path) -> Result<()> {
             file.seek(SeekFrom::Start(chunk.offset as u64)).await?;
             let mut remaining = chunk.size;
             while remaining > 0 {
+                {
+                    let state = interrupt_state.lock().await;
+                    if state.confirmed_abort {
+                        bail!("Flashing aborted by user.");
+                    }
+                }
+
                 let buf = sender.get_mut_data(remaining).await?;
                 let n = file.read_exact(buf).await?;
                 remaining -= n;
