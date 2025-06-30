@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use android_sparse_image::{
     CHUNK_HEADER_BYTES_LEN, ChunkHeader, FileHeader, FileHeaderBytes, ParseError,
     split::{split_image, split_raw},
@@ -10,7 +12,7 @@ use fastboot_protocol::{
 };
 use indicatif::{ProgressBar, ProgressStyle};
 use mediatek_brom::{Brom, io::BromExecuteAsync};
-use std::path::{Path, PathBuf};
+use nix::unistd::Uid;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt, SeekFrom},
@@ -43,6 +45,11 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    if !Uid::effective().is_root() {
+        eprintln!("Error: this tool must be run as root.");
+        std::process::exit(1);
+    }
+
     let args = Args::try_parse().unwrap_or_else(|e| {
         let mut msg = e.to_string();
         msg = msg.replace(

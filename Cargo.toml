@@ -15,6 +15,7 @@ clap-num = "1.2.0"
 fastboot-protocol = "0.3.1"
 indicatif = "0.17"
 mediatek-brom = { version = "0.1.0", features = ["tokio"] }
+nix = { version = "0.30", features = ["user"] }
 nusb = "0.1.14"
 tokio = { version = "1.45.1", features = ["full"] }
 tokio-serial = "5.4.4"
