@@ -9,11 +9,13 @@ use fastboot_protocol::{
     protocol::parse_u32_hex,
 };
 use indicatif::{ProgressBar, ProgressStyle};
+use mediatek_brom::{Brom, io::BromExecuteAsync};
 use std::path::{Path, PathBuf};
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt, SeekFrom},
 };
+use tokio_serial::SerialPortBuilderExt;
 
 #[derive(Parser)]
 #[clap(
@@ -51,21 +53,32 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     });
 
-    println!("Waiting for {} to appear...", args.dev);
+    println!("Waiting for target device...");
     while !Path::new(&args.dev).exists() {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
 
-    let status = std::process::Command::new("upload_da")
-        .arg(&args.dev)
-        .arg(&args.da)
-        .status()
-        .context("Failed to execute upload_da")?;
-    if !status.success() {
-        bail!("upload_da failed with status: {}", status);
+    {
+        let baud_rate = 115200;
+        let address = 0x201000;
+
+        let mut serial = tokio_serial::new(&args.dev, baud_rate).open_native_async()?;
+
+        let brom = serial.execute(Brom::handshake(address)).await?;
+        let hwcode = serial.execute(brom.hwcode()).await?;
+        println!(
+            "Handshake successful: (SoC 0x{:04x}, version {})",
+            hwcode.code, hwcode.version
+        );
+
+        let data = tokio::fs::read(&args.da).await?;
+        println!("Uploading DA to {:#x}...", 0x201000);
+        serial.execute(brom.send_da(&data)).await?;
+        println!("Executing DA...");
+        serial.execute(brom.jump_da64()).await?;
     }
 
-    println!("Waiting for fastboot device...");
+    println!("\nWaiting for fastboot device...");
     let device = loop {
         if let Some(d) = devices()?.next() {
             break d;
@@ -74,14 +87,14 @@ async fn main() -> Result<()> {
     };
     let mut fb = NusbFastBoot::from_info(&device)?;
 
-    println!("Flashing FIP to mmc0boot0...");
+    println!("\nFlashing FIP to mmc0boot0...");
     flash(&mut fb, "mmc0boot0", &args.fip).await?;
 
     println!("Erasing mmc0boot1...");
     fb.erase("mmc0boot1").await?;
 
     if let Some(img) = &args.img {
-        println!("Flashing IMG to mmc0...");
+        println!("\nFlashing IMG to mmc0...");
         fb.erase("mmc0").await?;
         flash(&mut fb, "mmc0", img).await?;
     } else {
@@ -93,7 +106,6 @@ async fn main() -> Result<()> {
 }
 
 async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u32) -> Result<()> {
-    println!("Uploading raw image directly");
     let mut sender = fb.download(size).await?;
     let mut left = size as usize;
     let pb = ProgressBar::new(left as u64).with_style(
@@ -112,7 +124,7 @@ async fn flash_raw(fb: &mut NusbFastBoot, target: &str, mut file: File, size: u3
 
     pb.finish_with_message("Upload complete");
     sender.finish().await?;
-    println!("Flashing data");
+    println!("\nFlashing data...");
     fb.flash(target).await?;
     Ok(())
 }
