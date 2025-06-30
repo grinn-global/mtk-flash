@@ -28,7 +28,7 @@ const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "debian-grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
+    override_usage = "debian-genio-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
     about = "A tool for flashing Grinn Genio devices.",
     version = "0.1.0"
 )]

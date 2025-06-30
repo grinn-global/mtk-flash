@@ -1,31 +1,33 @@
 # Debian Genio Flash
 
+![CI](https://github.com/grinn-global/debian-genio-flash/actions/workflows/main.yml/badge.svg)
+
 **Debian Genio Flash** is a command-line utility for flashing Debian-based firmware to Grinn Genio devices via USB and UART. It supports MediaTek boot ROM (BROM) communication, DA upload, and fastboot flashing with image splitting.
 
 ## Usage
 
-1. **Add user to `dialout` group**:
+1. Add user to `dialout` group:
 
     ```sh
     sudo usermod -aG dialout <username>
     ```
 
-2. **Log out and log back in** for group membership to apply.
+2. Log out and log back in for group membership to apply.
 
-3. **Use the tool** with correct device path. Example:
+3. Use the tool with correct device path:
 
     ```sh
-    sudo debian-grinn-flash \
-      --da boot/lk.img \
-      --fip boot/fip.img \
-      --img emmc_sparse.img \
-      --dev /dev/ttyUSB0
+    sudo debian-genio-flash \
+        --da boot/lk.img \
+        --fip boot/fip.img \
+        --img emmc_sparse.img \
+        --dev /dev/ttyUSB0
     ```
 
 ### Arguments
 
 ```sh
-debian-grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>
+debian-genio-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>
 ```
 
 * `--da <PATH>`: Path to the Download Agent image.
