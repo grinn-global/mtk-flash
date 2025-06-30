@@ -1,5 +1,26 @@
 use assert_cmd::Command;
+use clap::Parser;
+use debian_genio_flash::args::Args;
 use predicates::str::contains;
+
+#[test]
+fn parses_all_args() {
+    let args = Args::parse_from([
+        "test",
+        "--da",
+        "boot/lk.img",
+        "--fip",
+        "boot/fip.img",
+        "--img",
+        "system.img",
+        "--dev",
+        "/dev/ttyUSB0",
+    ]);
+    assert_eq!(args.da.to_str().unwrap(), "boot/lk.img");
+    assert_eq!(args.fip.unwrap().to_str().unwrap(), "boot/fip.img");
+    assert_eq!(args.img.unwrap().to_str().unwrap(), "system.img");
+    assert_eq!(args.dev, "/dev/ttyUSB0");
+}
 
 #[test]
 fn prints_help() {
