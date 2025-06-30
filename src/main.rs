@@ -9,14 +9,12 @@ use android_sparse_image::{
 };
 use anyhow::{Context, Result, bail};
 use clap::Parser;
-use colored::*;
 use fastboot_protocol::{
     nusb::{NusbFastBoot, devices},
     protocol::parse_u32_hex,
 };
 use indicatif::{ProgressBar, ProgressStyle};
 use mediatek_brom::{Brom, io::BromExecuteAsync};
-use nix::unistd::Uid;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt, SeekFrom},
@@ -30,7 +28,7 @@ const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
+    override_usage = "debian-grinn-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
     about = "A tool for flashing Grinn Genio devices.",
     version = "0.1.0"
 )]
@@ -95,14 +93,6 @@ async fn main() -> Result<()> {
             }
         }
     });
-
-    if !Uid::effective().is_root() {
-        eprintln!(
-            "{}\n",
-            "Warning: not running as root. This may cause permission issues with the device."
-                .yellow()
-        );
-    }
 
     println!("Waiting for target device...\n");
     while !Path::new(&args.dev).exists() {
