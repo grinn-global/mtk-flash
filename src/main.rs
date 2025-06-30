@@ -9,6 +9,7 @@ use android_sparse_image::{
 };
 use anyhow::{Context, Result, bail};
 use clap::Parser;
+use colored::*;
 use fastboot_protocol::{
     nusb::{NusbFastBoot, devices},
     protocol::parse_u32_hex,
@@ -62,11 +63,6 @@ struct InterruptState {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    if !Uid::effective().is_root() {
-        eprintln!("Error: this tool must be run as root.");
-        std::process::exit(1);
-    }
-
     let args = Args::try_parse().unwrap_or_else(|e| {
         let mut msg = e.to_string();
         msg = msg.replace(
@@ -99,6 +95,14 @@ async fn main() -> Result<()> {
             }
         }
     });
+
+    if !Uid::effective().is_root() {
+        eprintln!(
+            "{}\n",
+            "Warning: not running as root. This may cause permission issues with the device."
+                .yellow()
+        );
+    }
 
     println!("Waiting for target device...\n");
     while !Path::new(&args.dev).exists() {
