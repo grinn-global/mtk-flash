@@ -15,6 +15,12 @@ impl InterruptState {
     }
 }
 
+impl Default for InterruptState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn setup_interrupt_handler(state: Arc<Mutex<InterruptState>>) {
     tokio::spawn(async move {
         loop {
