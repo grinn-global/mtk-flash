@@ -23,7 +23,7 @@ indicatif = "0.17"
 mediatek-brom = { version = "0.1.0", features = ["tokio"] }
 nusb = "0.1.14"
 tokio = { version = "1.45.1", features = ["full"] }
-tokio-serial = "5.4.4"
+tokio-serial = "5.4.5"
 
 [dev-dependencies]
 assert_cmd = "2.0.17"
