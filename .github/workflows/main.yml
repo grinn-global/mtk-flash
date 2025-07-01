@@ -26,17 +26,7 @@ jobs:
         rustup default stable
         rustup component add clippy
 
-  check-format:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Check Formatting
-      run: |
-        cargo fmt --all -- --check && echo "Formatting check passed."
-
-  license-check:
+  check-license:
     needs: setup
     runs-on: ubuntu-latest
     steps:
@@ -47,21 +37,64 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Install reuse
+    - name: Install Reuse
       run: pip install reuse
 
-    - name: Run REUSE Lint
-      run: reuse lint --lines
+    - name: Run Reuse Lint
+      run: reuse lint --lines && echo "License check passed."
+
+  check-format:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check Formatting
+      run: |
+        cargo fmt --all -- --check && echo "Formatting check passed."
+
+  check-deps:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install cargo-outdated
+      run: cargo install cargo-outdated
+
+    - name: Check for Outdated Dependencies
+      run: cargo outdated
+      continue-on-error: true
+
+  audit:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install cargo-audit
+      run: cargo install cargo-audit
+
+    - name: Run Cargo Audit
+      run: cargo audit
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
-    needs: check-format
+    needs: lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Run Lint and Tests
       run: |
-        cargo clippy --all-targets --all-features -- -D warnings
         cargo test
 
   build:
