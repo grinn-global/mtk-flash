@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[clap(
     override_usage = "debian-genio-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
     about = "A tool for flashing Grinn Genio devices.",
-    version = "0.1.0"
+    version = env!("CARGO_PKG_VERSION")
 )]
 pub struct Args {
     #[clap(long, value_name = "PATH", help = "Download Agent image")]
