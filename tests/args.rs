@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
+
 use assert_cmd::Command;
 use clap::Parser;
 use debian_genio_flash::args::Args;

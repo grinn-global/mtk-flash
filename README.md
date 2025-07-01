@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
+-->
+
 # Debian Genio Flash
 
 ![CI](https://github.com/grinn-global/debian-genio-flash/actions/workflows/main.yml/badge.svg)

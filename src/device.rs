@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
+
 use anyhow::Result;
 use fastboot_protocol::nusb::{NusbFastBoot, devices};
 use mediatek_brom::{Brom, io::BromExecuteAsync};
