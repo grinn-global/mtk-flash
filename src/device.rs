@@ -24,7 +24,7 @@ pub async fn initialize_brom(da_path: &Path, dev_path: &str) -> Result<()> {
     );
 
     let data = fs::read(da_path).await?;
-    println!("Uploading DA to {:#x}...", HANDSHAKE_ADDRESS);
+    println!("Uploading DA to {HANDSHAKE_ADDRESS:#x}...");
     serial.execute(brom.send_da(&data)).await?;
     println!("Executing DA...\n");
     serial.execute(brom.jump_da64()).await?;
