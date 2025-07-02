@@ -44,11 +44,11 @@ Alternatively, a precompiled binary is available on the [Releases](https://githu
 3. Use the tool with the correct serial device path:
 
     ```sh
-    sudo debian-genio-flash \
-        --da boot/lk.img \
-        --fip boot/fip.img \
+    debian-genio-flash \
+        --da lk.bin \
+        --fip fip.img \
         --img emmc_sparse.img \
-        --dev /dev/ttyUSB0
+        --dev /dev/ttyACM0
     ```
 
 ### Arguments
