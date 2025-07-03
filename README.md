@@ -36,7 +36,7 @@ Alternatively, a precompiled binary is available on the [Releases](https://githu
 1. Add your user to the `dialout` group:
 
     ```sh
-    sudo usermod -aG dialout <username>
+    sudo usermod -aG dialout $USER
     ```
 
 2. Log out and log back in to apply the group membership. Alternatively, you can run `newgrp dialout` in the terminal to apply the changes immediately.
