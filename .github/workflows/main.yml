@@ -114,5 +114,5 @@ jobs:
     - name: Upload Binary Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: debian-genio-flash
-        path: target/x86_64-unknown-linux-musl/release/debian-genio-flash
+        name: mtk-flash
+        path: target/x86_64-unknown-linux-musl/release/mtk-flash

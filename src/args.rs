@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "debian-genio-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
-    about = "A tool for flashing Grinn Genio devices.",
+    override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
+    about = "A command-line utility for flashing raw images to MediaTek devices.",
     version = env!("CARGO_PKG_VERSION")
 )]
 pub struct Args {

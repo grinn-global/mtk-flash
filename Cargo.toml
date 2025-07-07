@@ -2,16 +2,18 @@
 # SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
 
 [package]
-name = "debian-genio-flash"
-description = "A tool for flashing Grinn Genio devices."
+name = "mtk-flash"
+description = "A command-line utility for flashing raw images to MediaTek devices."
 version = "1.0.0"
 edition = "2024"
-repository = "https://github.com/grinn-global/debian-genio-flash"
+repository = "https://github.com/grinn-global/mtk-flash"
 license = "Apache-2.0"
-publish = false
+keywords = ["gamedev", "graphics"]
+categories = ["command-line-utilities", "embedded"]
+exclude = ["/.github/"]
 
 [lib]
-name = "debian_genio_flash"
+name = "mtk_flash"
 
 [dependencies]
 android-sparse-image = "0.1.3"

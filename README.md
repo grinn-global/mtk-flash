@@ -3,11 +3,11 @@ SPDX-License-Identifier: Apache-2.0
 SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
 -->
 
-# Debian Genio Flash
+# MTK Flash
 
-![CI](https://github.com/grinn-global/debian-genio-flash/actions/workflows/main.yml/badge.svg)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/grinn-global/mtk-flash/main.yml) ![License](https://img.shields.io/github/license/grinn-global/mtk-flash)
 
-**Debian Genio Flash** is a command-line utility for flashing Debian-based firmware to Grinn Genio devices via USB and UART. It supports MediaTek boot ROM (BROM) communication, Download Agent upload, and Fastboot flashing with image splitting.
+**MTK Flash** is a command-line utility for flashing raw images to MediaTek devices, supporting MediaTek Boot ROM communication, Download Agent upload, and Fastboot flashing with image splitting.
 
 ## Building
 
@@ -26,10 +26,10 @@ SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
    The compiled binary will be located in the `target/release` directory:
 
    ```
-   ./target/release/debian-genio-flash --help
+   ./target/release/mtk-flash --help
    ```
 
-Alternatively, a precompiled binary is available on the [Releases](https://github.com/grinn-global/debian-genio-flash/releases) page.
+Alternatively, a precompiled binary is available on the [Releases](https://github.com/grinn-global/mtk-flash/releases) page.
 
 ## Usage
 
@@ -44,7 +44,7 @@ Alternatively, a precompiled binary is available on the [Releases](https://githu
 3. Use the tool with the correct serial device path:
 
     ```sh
-    debian-genio-flash \
+    mtk-flash \
         --da lk.bin \
         --fip fip.img \
         --img emmc_sparse.img \
@@ -54,7 +54,7 @@ Alternatively, a precompiled binary is available on the [Releases](https://githu
 ### Arguments
 
 ```sh
-debian-genio-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>
+mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>
 ```
 
 - `--da <PATH>`: Path to the Download Agent image.

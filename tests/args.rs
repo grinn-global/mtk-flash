@@ -3,7 +3,7 @@
 
 use assert_cmd::Command;
 use clap::Parser;
-use debian_genio_flash::args::Args;
+use mtk_flash::args::Args;
 use predicates::str::contains;
 
 #[test]
@@ -27,7 +27,7 @@ fn parses_all_args() {
 
 #[test]
 fn prints_help() {
-    let mut cmd = Command::cargo_bin("debian-genio-flash").unwrap();
+    let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
     cmd.arg("--help")
         .assert()
         .success()
@@ -36,7 +36,7 @@ fn prints_help() {
 
 #[test]
 fn fails_without_required_args() {
-    let mut cmd = Command::cargo_bin("debian-genio-flash").unwrap();
+    let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
     cmd.assert()
         .failure()
         .stderr(contains("required arguments were not provided"));
@@ -44,7 +44,7 @@ fn fails_without_required_args() {
 
 #[test]
 fn fails_with_missing_da() {
-    let mut cmd = Command::cargo_bin("debian-genio-flash").unwrap();
+    let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
     cmd.args(["--dev", "/dev/ttyUSB0"])
         .assert()
         .failure()
@@ -53,7 +53,7 @@ fn fails_with_missing_da() {
 
 #[test]
 fn fails_with_missing_dev() {
-    let mut cmd = Command::cargo_bin("debian-genio-flash").unwrap();
+    let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
     cmd.args(["--da", "boot/lk.img"])
         .assert()
         .failure()

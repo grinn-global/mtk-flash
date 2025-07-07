@@ -279,24 +279,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
-name = "debian-genio-flash"
-version = "1.0.0"
-dependencies = [
- "android-sparse-image",
- "anyhow",
- "assert_cmd",
- "clap",
- "clap-num",
- "fastboot-protocol",
- "indicatif",
- "mediatek-brom",
- "nusb",
- "predicates",
- "tokio",
- "tokio-serial",
-]
-
-[[package]]
 name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -571,6 +553,24 @@ dependencies = [
  "nix 0.29.0",
  "serialport",
  "winapi",
+]
+
+[[package]]
+name = "mtk-flash"
+version = "1.0.0"
+dependencies = [
+ "android-sparse-image",
+ "anyhow",
+ "assert_cmd",
+ "clap",
+ "clap-num",
+ "fastboot-protocol",
+ "indicatif",
+ "mediatek-brom",
+ "nusb",
+ "predicates",
+ "tokio",
+ "tokio-serial",
 ]
 
 [[package]]
