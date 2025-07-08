@@ -21,10 +21,11 @@ anyhow = "1.0.98"
 clap = { version = "4.5.40", features = ["derive"] }
 clap-num = "1.2.0"
 fastboot-protocol = "0.3.1"
-indicatif = "0.17"
+gpio-cdev = "0.6"
+indicatif = "0.18"
 mediatek-brom = { version = "0.1.0", features = ["tokio"] }
 nusb = "0.1.14"
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { version = "1.46.1", features = ["full"] }
 tokio-serial = "5.4.5"
 
 [dev-dependencies]

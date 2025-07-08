@@ -19,6 +19,17 @@ async fn main() -> Result<()> {
     let interrupt_state = Arc::new(Mutex::new(InterruptState::new()));
     setup_interrupt_handler(interrupt_state.clone());
 
+    let maybe_board = if let Some(ref gpiochip) = args.gpio {
+        Some(device::DeviceControl::new(gpiochip.as_path(), 1, 2, 0)?)
+    } else {
+        None
+    };
+
+    if let Some(board) = maybe_board.as_ref() {
+        println!("Booting target device into download mode...");
+        board.download_mode()?;
+    }
+
     device::initialize_brom(&args.da, &args.dev).await?;
     let mut fb = device::wait_for_fastboot().await?;
 
@@ -29,7 +40,7 @@ async fn main() -> Result<()> {
         println!("\nErasing mmc0boot1...");
         fb.erase("mmc0boot1").await?;
     } else {
-        println!("No FIP image provided, skipping mmc0boot0 flash.");
+        println!("\nNo FIP image provided, skipping mmc0boot0 flash.");
     }
 
     if let Some(img) = &args.img {
@@ -38,9 +49,15 @@ async fn main() -> Result<()> {
         println!("\nFlashing IMG to mmc0...");
         flash::flash(&mut fb, "mmc0", img, interrupt_state.clone()).await?;
     } else {
-        println!("No system image provided, skipping mmc0 flash.");
+        println!("\nNo system image provided, skipping mmc0 flash.");
+    }
+
+    if let Some(board) = maybe_board {
+        println!("\nResetting target device...");
+        board.reset()?;
     }
 
     println!("\nAll operations completed successfully.");
+
     Ok(())
 }

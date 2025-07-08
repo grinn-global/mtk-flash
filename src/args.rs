@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE>",
+    override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP>]",
     about = "A command-line utility for flashing raw images to MediaTek devices.",
     version = env!("CARGO_PKG_VERSION")
 )]
@@ -30,6 +30,13 @@ pub struct Args {
         help = "Path to the device (e.g. /dev/ttyACM0)"
     )]
     pub dev: String,
+
+    #[clap(
+        long,
+        value_name = "CHIP",
+        help = "Optional path to gpiochip for controlling power, reset and download mode (e.g. /dev/gpiochip0)"
+    )]
+    pub gpio: Option<PathBuf>,
 }
 
 impl Args {

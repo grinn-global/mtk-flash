@@ -55,7 +55,11 @@ pub async fn flash(
         Err(e) => bail!("Failed to parse image: {e}"),
     };
 
-    println!("Uploading in {} parts", splits.len());
+    println!(
+        "Uploading in {} parts, total size: {} bytes.",
+        splits.len(),
+        splits.iter().map(|s| s.sparse_size()).sum::<usize>()
+    );
 
     let mut last_duration: Option<Duration> = None;
 
@@ -78,7 +82,7 @@ pub async fn flash(
         let pb = ProgressBar::new(total_bytes as u64).with_style(
             ProgressStyle::default_bar()
                 .template(
-                    "[{elapsed_precise}] [{bar:40.green/black}] {bytes}/{total_bytes} ({eta})",
+                    "[{elapsed_precise}] [{bar:40.green/black}] Uploading {bytes}/{total_bytes}",
                 )
                 .unwrap()
                 .progress_chars("=>-"),
@@ -156,9 +160,12 @@ async fn flash_raw(
 ) -> Result<()> {
     let mut sender = fb.download(size).await?;
     let mut left = size as usize;
+
+    println!("Uploading raw image, size {left} bytes.");
+
     let pb = ProgressBar::new(left as u64).with_style(
         ProgressStyle::default_bar()
-            .template("[{elapsed_precise}] [{bar:40.green/black}] {bytes}/{total_bytes} ({eta})")
+            .template("[{elapsed_precise}] [{bar:40.green/black}] Uploading {bytes}/{total_bytes}")
             .unwrap()
             .progress_chars("=>-"),
     );
@@ -179,9 +186,30 @@ async fn flash_raw(
 
     pb.finish_with_message("Upload complete");
     sender.finish().await?;
-    fb.flash(target).await?;
 
-    println!(); // Ensure newline after progress bar
+    let estimated = Duration::from_secs(5); // A guess
+    let total_ticks = estimated.as_millis() as u64;
+
+    let flash_pb = ProgressBar::new(total_ticks).with_style(
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] [{bar:40.cyan/black}] Writing {wide_msg}")
+            .unwrap()
+            .progress_chars("=>-"),
+    );
+
+    let pb_clone = flash_pb.clone();
+    let tick = tokio::spawn(async move {
+        let start = Instant::now();
+        while start.elapsed() < estimated {
+            pb_clone.inc(100);
+            sleep(Duration::from_millis(100)).await;
+        }
+    });
+
+    fb.flash(target).await?;
+    flash_pb.finish_with_message("[OK]");
+    tick.abort();
+    println!(); // Newline for clean output
 
     Ok(())
 }
