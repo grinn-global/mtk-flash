@@ -39,9 +39,16 @@ Alternatively, a precompiled binary is available on the [Releases](https://githu
     sudo usermod -aG dialout $USER
     ```
 
-2. Log out and log back in to apply the group membership. Alternatively, you can run `newgrp dialout` in the terminal to apply the changes immediately.
+2. If you want to use the automatic boot into download mode functionality, you also need to set up udev rules for the GPIO chip:
 
-3. Use the tool with the correct serial device path:
+    ```sh
+    sudo cp data/90-mtk-flash.rules /etc/udev/rules.d/
+    sudo udevadm control --reload && sudo udevadm trigger
+    ```
+
+3. Log out and log back in to apply the group membership. Alternatively, you can run `newgrp dialout` in the terminal to apply the changes immediately.
+
+4. Use the tool with the correct serial device path:
 
     ```sh
     mtk-flash \

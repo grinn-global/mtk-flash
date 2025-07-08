@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
+
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", MODE="0660", GROUP="dialout"
