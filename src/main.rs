@@ -16,9 +16,6 @@ use tokio::sync::Mutex;
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let interrupt_state = Arc::new(Mutex::new(InterruptState::new()));
-    setup_interrupt_handler(interrupt_state.clone());
-
     let maybe_board = if let Some(ref gpiochip) = args.gpio {
         Some(device::DeviceControl::new(gpiochip.as_path(), 1, 2, 0)?)
     } else {
@@ -26,12 +23,15 @@ async fn main() -> Result<()> {
     };
 
     if let Some(board) = maybe_board.as_ref() {
-        println!("Booting target device into download mode...");
+        println!("Booting target device into download mode...\n");
         board.download_mode()?;
     }
 
     device::initialize_brom(&args.da, &args.dev).await?;
     let mut fb = device::wait_for_fastboot().await?;
+
+    let interrupt_state = Arc::new(Mutex::new(InterruptState::new()));
+    setup_interrupt_handler(interrupt_state.clone());
 
     if let Some(fip) = &args.fip {
         println!("\nFlashing FIP to mmc0boot0...");

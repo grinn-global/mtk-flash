@@ -78,7 +78,7 @@ impl DeviceControl {
 }
 
 pub async fn initialize_brom(da_path: &Path, dev_path: &str) -> Result<()> {
-    println!("\nWaiting for target device...");
+    println!("Waiting for target device...");
     while !Path::new(dev_path).exists() {
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
