@@ -13,7 +13,7 @@ const HANDSHAKE_ADDRESS: u32 = 0x201000;
 const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
 
 pub async fn initialize_brom(da_path: &Path, dev_path: &str) -> Result<()> {
-    println!("Waiting for target device...\n");
+    println!("Waiting for target device...");
     while !Path::new(dev_path).exists() {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
@@ -22,21 +22,21 @@ pub async fn initialize_brom(da_path: &Path, dev_path: &str) -> Result<()> {
     let brom = serial.execute(Brom::handshake(HANDSHAKE_ADDRESS)).await?;
     let hwcode = serial.execute(brom.hwcode()).await?;
     println!(
-        "Handshake successful: SoC 0x{:04x}, version {}",
+        "\nHandshake successful: SoC 0x{:04x}, version {}",
         hwcode.code, hwcode.version
     );
 
     let data = fs::read(da_path).await?;
     println!("Uploading DA to {HANDSHAKE_ADDRESS:#x}...");
     serial.execute(brom.send_da(&data)).await?;
-    println!("Executing DA...\n");
+    println!("Executing DA...");
     serial.execute(brom.jump_da64()).await?;
 
     Ok(())
 }
 
 pub async fn wait_for_fastboot() -> Result<NusbFastBoot> {
-    println!("Waiting for fastboot device...\n");
+    println!("\nWaiting for fastboot device...");
     let device = loop {
         if let Some(d) = devices()?.find(|d| {
             d.serial_number()

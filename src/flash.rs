@@ -14,6 +14,7 @@ use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt, SeekFrom},
     sync::Mutex,
+    time::{Duration, Instant, sleep},
 };
 
 pub async fn flash(
@@ -55,6 +56,9 @@ pub async fn flash(
     };
 
     println!("Uploading in {} parts", splits.len());
+
+    let mut last_duration: Option<Duration> = None;
+
     for split in &splits {
         {
             let state = interrupt_state.lock().await;
@@ -111,8 +115,34 @@ pub async fn flash(
 
         pb.finish_with_message("Part uploaded");
         sender.finish().await?;
+
+        let estimated = last_duration.unwrap_or(Duration::from_secs(12)); // A guess for the first iteration
+        let total_ticks = estimated.as_millis() as u64;
+        let flash_pb = ProgressBar::new(total_ticks).with_style(
+            ProgressStyle::default_bar()
+                .template("[{elapsed_precise}] [{bar:40.cyan/black}] Writing {wide_msg}")
+                .unwrap()
+                .progress_chars("=>-"),
+        );
+
+        let pb_clone = flash_pb.clone();
+        let tick = tokio::spawn(async move {
+            let start = Instant::now();
+            while start.elapsed() < estimated {
+                pb_clone.inc(100);
+                sleep(Duration::from_millis(100)).await;
+            }
+        });
+
+        let start = Instant::now();
         fb.flash(target).await?;
+        let duration = start.elapsed();
+        last_duration = Some(duration);
+        flash_pb.finish_with_message("[OK]");
+        tick.abort();
     }
+
+    println!(); // Ensure newline after progress bar
 
     Ok(())
 }
@@ -150,5 +180,8 @@ async fn flash_raw(
     pb.finish_with_message("Upload complete");
     sender.finish().await?;
     fb.flash(target).await?;
+
+    println!(); // Ensure newline after progress bar
+
     Ok(())
 }

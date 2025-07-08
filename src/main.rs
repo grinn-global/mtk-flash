@@ -23,24 +23,24 @@ async fn main() -> Result<()> {
     let mut fb = device::wait_for_fastboot().await?;
 
     if let Some(fip) = &args.fip {
-        println!("Flashing FIP to mmc0boot0...");
+        println!("\nFlashing FIP to mmc0boot0...");
         flash::flash(&mut fb, "mmc0boot0", fip, interrupt_state.clone()).await?;
 
-        println!("\n\nErasing mmc0boot1...\n");
+        println!("\nErasing mmc0boot1...");
         fb.erase("mmc0boot1").await?;
     } else {
         println!("No FIP image provided, skipping mmc0boot0 flash.");
     }
 
     if let Some(img) = &args.img {
-        println!("Erasing mmc0...\n");
+        println!("\nErasing mmc0...");
         fb.erase("mmc0").await?;
-        println!("Flashing IMG to mmc0...");
+        println!("\nFlashing IMG to mmc0...");
         flash::flash(&mut fb, "mmc0", img, interrupt_state.clone()).await?;
     } else {
         println!("No system image provided, skipping mmc0 flash.");
     }
 
-    println!("All operations completed successfully.");
+    println!("\nAll operations completed successfully.");
     Ok(())
 }
