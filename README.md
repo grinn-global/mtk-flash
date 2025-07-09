@@ -65,7 +65,7 @@ mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP
 ```
 
 - `--da <PATH>`: Path to the Download Agent image.
-- `--fip <PATH>` *(optional)*: Path to the Firmware Image Package (FIP) image.
+- `--fip <PATH>` *(optional)*: Path to the Firmware Image Package image.
 - `--img <PATH>` *(optional)*: Path to the system image.
 - `--dev <DEVICE>`: Serial device path.
 - `--gpio <CHIP>` *(optional)*: Path to the GPIO chip device for controlling power, reset and download mode.
