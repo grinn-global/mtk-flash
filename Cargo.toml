@@ -4,7 +4,7 @@
 [package]
 name = "mtk-flash"
 description = "A command-line utility for flashing raw images to MediaTek devices."
-version = "1.1.0"
+version = "1.2.0"
 edition = "2024"
 repository = "https://github.com/grinn-global/mtk-flash"
 license = "Apache-2.0"
