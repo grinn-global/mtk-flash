@@ -11,7 +11,6 @@ use tokio_serial::SerialPortBuilderExt;
 
 const BAUD_RATE: u32 = 115200;
 const HANDSHAKE_ADDRESS: u32 = 0x201000;
-const TARGET_FASTBOOT_ID: &str = "0123456789ABCDEF";
 
 pub struct DeviceControl {
     reset: LineHandle,
@@ -103,15 +102,10 @@ pub async fn initialize_brom(da_path: &Path, dev_path: &str) -> Result<()> {
 pub async fn wait_for_fastboot() -> Result<NusbFastBoot> {
     println!("\nWaiting for fastboot device...");
     let device = loop {
-        if let Some(d) = devices()?.find(|d| {
-            d.serial_number()
-                .map(|s| s == TARGET_FASTBOOT_ID)
-                .unwrap_or(false)
-        }) {
+        if let Some(d) = devices()?.next() {
             break d;
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     };
-
     Ok(NusbFastBoot::from_info(&device)?)
 }
