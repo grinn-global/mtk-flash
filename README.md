@@ -69,6 +69,7 @@ mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP
 - `--img <PATH>` *(optional)*: Path to the system image.
 - `--dev <DEVICE>`: Serial device path.
 - `--gpio <CHIP>` *(optional)*: Path to the GPIO chip device for controlling power, reset and download mode.
+- `--preserve-boot1` *(optional)*: Do not erase `mmc0boot1` after flashing FIP. This is useful for boards/setups where `mmc0boot1` stores u-boot environment (for example, stable MAC addresses) that should be preserved.
 
 ## Troubleshooting
 

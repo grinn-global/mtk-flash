@@ -59,3 +59,19 @@ fn fails_with_missing_dev() {
         .failure()
         .stderr(contains("required arguments were not provided"));
 }
+
+#[test]
+fn parses_no_erase_boot1_flag() {
+    let args = Args::parse_from([
+        "test",
+        "--da",
+        "boot/lk.img",
+        "--dev",
+        "/dev/ttyUSB0",
+        "--preserve-boot1",
+    ]);
+    assert!(args.preserve_boot1);
+
+    let args = Args::parse_from(["test", "--da", "boot/lk.img", "--dev", "/dev/ttyUSB0"]);
+    assert!(!args.preserve_boot1);
+}
