@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[clap(
-    override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP>]",
+    override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP>] [--preserve-boot1]",
     about = "A command-line utility for flashing raw images to MediaTek devices.",
     version = env!("CARGO_PKG_VERSION")
 )]
@@ -37,6 +37,9 @@ pub struct Args {
         help = "Optional path to gpiochip for controlling power, reset and download mode (e.g. /dev/gpiochip0)"
     )]
     pub gpio: Option<PathBuf>,
+
+    #[clap(long, help = "Do not erase mmc0boot1 after flashing FIP.")]
+    pub preserve_boot1: bool,
 }
 
 impl Args {

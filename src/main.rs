@@ -37,8 +37,12 @@ async fn main() -> Result<()> {
         println!("\nFlashing FIP to mmc0boot0...");
         flash::flash(&mut fb, "mmc0boot0", fip, interrupt_state.clone()).await?;
 
-        println!("\nErasing mmc0boot1...");
-        fb.erase("mmc0boot1").await?;
+        if args.preserve_boot1 {
+            println!("\nPreserving mmc0boot1...");
+        } else {
+            println!("\nErasing mmc0boot1...");
+            fb.erase("mmc0boot1").await?;
+        }
     } else {
         println!("\nNo FIP image provided, skipping mmc0boot0 flash.");
     }
