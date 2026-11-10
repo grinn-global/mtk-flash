@@ -24,7 +24,7 @@ pub async fn flash(
     interrupt_state: Arc<Mutex<InterruptState>>,
 ) -> Result<()> {
     let max_dl = fb.get_var("max-download-size").await?;
-    let max_download = parse_u32_hex(&max_dl).context("Failed to parse max download size")?;
+    let max_download = parse_u32_hex(&max_dl).context("Failed to parse max download size")? as u64;
 
     let mut file = File::open(path).await?;
     let mut header_bytes = FileHeaderBytes::default();
@@ -46,11 +46,11 @@ pub async fn flash(
         Err(ParseError::UnknownMagic) => {
             file.seek(SeekFrom::Start(0)).await?;
             let size = file.seek(SeekFrom::End(0)).await?;
-            if size < max_download as u64 {
+            if size < max_download {
                 file.seek(SeekFrom::Start(0)).await?;
                 return flash_raw(fb, target, file, size as u32, interrupt_state).await;
             }
-            split_raw(size as usize, max_download)?
+            split_raw(size, max_download)?
         }
         Err(e) => bail!("Failed to parse image: {e}"),
     };
@@ -58,7 +58,7 @@ pub async fn flash(
     println!(
         "Uploading in {} parts, total size: {} bytes.",
         splits.len(),
-        splits.iter().map(|s| s.sparse_size()).sum::<usize>()
+        splits.iter().map(|s| s.sparse_size()).sum::<u64>()
     );
 
     let mut last_duration: Option<Duration> = None;
@@ -74,12 +74,12 @@ pub async fn flash(
         let mut sender = fb.download(split.sparse_size() as u32).await?;
         sender.extend_from_slice(&split.header.to_bytes()).await?;
 
-        let total_bytes: usize = split
+        let total_bytes: u64 = split
             .chunks
             .iter()
-            .map(|c| c.header.to_bytes().len() + c.size)
+            .map(|c| c.header.to_bytes().len() as u64 + c.size)
             .sum();
-        let pb = ProgressBar::new(total_bytes as u64).with_style(
+        let pb = ProgressBar::new(total_bytes).with_style(
             ProgressStyle::default_bar()
                 .template(
                     "[{elapsed_precise}] [{bar:40.green/black}] Uploading {bytes}/{total_bytes}",
@@ -100,7 +100,7 @@ pub async fn flash(
             sender.extend_from_slice(&hdr).await?;
             pb.inc(hdr.len() as u64);
 
-            file.seek(SeekFrom::Start(chunk.offset as u64)).await?;
+            file.seek(SeekFrom::Start(chunk.offset)).await?;
             let mut remaining = chunk.size;
             while remaining > 0 {
                 {
@@ -110,10 +110,10 @@ pub async fn flash(
                     }
                 }
 
-                let buf = sender.get_mut_data(remaining).await?;
-                let n = file.read_exact(buf).await?;
+                let buf = sender.get_mut_data(remaining as usize).await?;
+                let n = file.read_exact(buf).await? as u64;
                 remaining -= n;
-                pb.inc(n as u64);
+                pb.inc(n);
             }
         }
 
