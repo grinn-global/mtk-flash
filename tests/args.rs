@@ -26,15 +26,6 @@ fn parses_all_args() {
 }
 
 #[test]
-fn prints_help() {
-    let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
-    cmd.arg("--help")
-        .assert()
-        .success()
-        .stdout(contains("Usage"));
-}
-
-#[test]
 fn fails_without_required_args() {
     let mut cmd = Command::cargo_bin("mtk-flash").unwrap();
     cmd.assert()

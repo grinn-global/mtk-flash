@@ -8,7 +8,12 @@ use std::path::PathBuf;
 #[clap(
     override_usage = "mtk-flash --da <PATH> [--fip <PATH>] [--img <PATH>] --dev <DEVICE> [--gpio <CHIP>] [--preserve-boot1]",
     about = "A command-line utility for flashing raw images to MediaTek devices.",
-    version = env!("CARGO_PKG_VERSION")
+    version = env!("CARGO_PKG_VERSION"),
+    after_help = format!(
+        "{}Support:{}\n  Contact: Ignacy Kajdan <ignacy.kajdan@grinn-global.com>\n  Website: https://grinn-global.com",
+        clap::builder::styling::Styles::styled().get_header(),
+        clap::builder::styling::Styles::styled().get_header().render_reset(),
+    )
 )]
 pub struct Args {
     #[clap(long, value_name = "PATH", help = "Download Agent image")]
