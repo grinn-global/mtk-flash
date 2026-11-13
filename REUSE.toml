@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>
+
+version = 1
+
+[[annotations]]
+path = "Cargo.lock"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Ignacy Kajdan <ignacy.kajdan@grinn-global.com>"
+SPDX-License-Identifier = "Apache-2.0"
